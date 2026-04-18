@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>在庫管理アプリ</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 8px 0 4px;
+    }
+    .sub {
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+    .grid-3 {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      background: #111827;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .btn.red {
+      background: #dc2626;
+    }
+    .btn.green {
+      background: #059669;
+    }
+    .btn.orange {
+      background: #d97706;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 14px;
+      background: white;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .item-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #eef2ff;
+      color: #3730a3;
+      margin-right: 6px;
+      margin-top: 6px;
+    }
+    .low {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+    .info {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      color: #4b5563;
+      line-height: 1.7;
+      margin-top: 10px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 20px 0 10px;
+    }
+    .video-box {
+      width: 100%;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    video {
+      width: 100%;
+      max-height: 320px;
+      object-fit: cover;
+      display: block;
+    }
+    .small {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .price-box {
+      min-width: 160px;
+      text-align: right;
+    }
+    .price-stat {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+    .price-stat .big {
+      font-size: 22px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .hr {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 14px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">在庫管理アプリ</div>
+    <div class="sub">洗剤・柔軟剤・漂白剤の在庫、単価、バーコードをまとめて管理</div>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <div>登録商品数</div>
+        <div class="stat-value" id="statItems">0</div>
+      </div>
+      <div class="card">
+        <div>合計在庫</div>
+        <div class="stat-value" id="statStocks">0</div>
+      </div>
+      <div class="card">
+        <div>買い足し必要</div>
+        <div class="stat-value" id="statLow">0</div>
+      </div>
+    </div>
+
+    <div class="section-title">商品登録・編集</div>
+    <div class="card">
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+        <div>
+          <label>商品名</label>
+          <input id="name" placeholder="例: アタックZERO" />
+        </div>
+        <div>
+          <label>分類</label>
+          <select id="category">
+            <option>洗剤</option>
+            <option>柔軟剤</option>
+            <option>漂白剤</option>
+            <option>その他</option>
+          </select>
+        </div>
+        <div>
+          <label>購入先</label>
+          <select id="store">
+            <option>Amazon</option>
+            <option>楽天</option>
+            <option>ドラッグストア</option>
+            <option>その他</option>
+          </select>
+        </div>
+        <div>
+          <label>サイズ・香り</label>
+          <input id="size" placeholder="例: 2000mL / ふんわりブロッサム" />
+        </div>
+        <div>
+          <label>現在庫</label>
+          <input id="stock" type="number" min="0" value="1" />
+        </div>
+        <div>
+          <label>最低在庫</label>
+          <input id="minStock" type="number" min="0" value="1" />
+        </div>
+        <div>
+          <label>単位</label>
+          <input id="unit" value="個" />
+        </div>
+        <div>
+          <label>バーコード</label>
+          <input id="barcode" placeholder="JANコード" />
+        </div>
+        <div>
+          <label>価格（円）</label>
+          <input id="price" type="number" min="0" value="0" />
+        </div>
+        <div>
+          <label>内容量</label>
+          <input id="volume" type="number" min="0" value="0" />
+        </div>
+        <div>
+          <label>容量単位</label>
+          <select id="volumeUnit">
+            <option>mL</option>
+            <option>g</option>
+          </select>
+        </div>
+        <div>
+          <label>1回使用量</label>
+          <input id="dosePerWash" type="number" min="0" value="0" />
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label>メモ</label>
+          <input id="memo" placeholder="例: 無菌レベルの消臭力" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 12px;">
+        <button class="btn" onclick="saveItem()">保存する</button>
+        <button class="btn secondary" onclick="resetForm()">入力クリア</button>
+        <button class="btn orange" onclick="startScanner()">バーコード読取開始</button>
+        <button class="btn secondary" onclick="stopScanner()">読取停止</button>
+      </div>
+
+      <div class="small" style="margin-top: 8px;">
+        ※ バーコード読取は対応ブラウザで使えます。うまくいかない場合はバーコード欄に手入力してください。
+      </div>
+
+      <div class="video-box" id="videoBox" style="display:none;">
+        <video id="video" autoplay playsinline muted></video>
+      </div>
+      <div id="scanResult" class="info" style="display:none;"></div>
+    </div>
+
+    <div class="section-title">検索</div>
+    <div class="card">
+      <div class="grid" style="grid-template-columns: 1fr 220px;">
+        <div>
+          <label>キーワード</label>
+          <input id="search" placeholder="商品名・購入先・メモで検索" oninput="render()" />
+        </div>
+        <div>
+          <label>分類絞り込み</label>
+          <select id="filterCategory" onchange="render()">
+            <option>すべて</option>
+            <option>洗剤</option>
+            <option>柔軟剤</option>
+            <option>漂白剤</option>
+            <option>その他</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">在庫一覧</div>
+    <div id="items"></div>
+
+    <div class="section-title">買い物リスト</div>
+    <div id="shoppingList"></div>
+
+    <div class="section-title">単価比較</div>
+    <div id="pricingList"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "inventory_html_app_v1";
+    let editingId = null;
+    let stream = null;
+    let detectorTimer = null;
+
+    const defaultItems = [
+      {
+        id: crypto.randomUUID(),
+        name: "アタックZERO",
+        category: "洗剤",
+        store: "Amazon",
+        size: "2000mL",
+        stock: 2,
+        minStock: 1,
+        unit: "個",
+        barcode: "4901301435933",
+        price: 2033,
+        volume: 2000,
+        volumeUnit: "mL",
+        dosePerWash: 65,
+        memo: "アタック液体史上 最高の清潔力"
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "レノア 超消臭1WEEK 極やわ仕上げ",
+        category: "柔軟剤",
+        store: "楽天",
+        size: "ふんわりブロッサム 770mL",
+        stock: 1,
+        minStock: 1,
+        unit: "個",
+        barcode: "",
+        price: 548,
+        volume: 770,
+        volumeUnit: "mL",
+        dosePerWash: 20,
+        memo: "ふんわりブロッサム"
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "ワイドハイターEX",
+        category: "漂白剤",
+        store: "Amazon",
+        size: "特大 2400mL",
+        stock: 1,
+        minStock: 1,
+        unit: "個",
+        barcode: "",
+        price: 1265,
+        volume: 2400,
+        volumeUnit: "mL",
+        dosePerWash: 30,
+        memo: "部屋干し臭対策"
+      }
+    ];
+
+    function loadItems() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return defaultItems;
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return defaultItems;
+      }
+    }
+
+    let items = loadItems();
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function yen(num) {
+      return Number(num || 0).toLocaleString("ja-JP");
+    }
+
+    function calcUnitPricePer1000(item) {
+      if (!item.price || !item.volume) return null;
+      return Math.round((item.price / item.volume) * 1000);
+    }
+
+    function calcPricePerWash(item) {
+      if (!item.price || !item.volume || !item.dosePerWash) return null;
+      return Math.round((item.price / (item.volume / item.dosePerWash)) * 10) / 10;
+    }
+
+    function getFormData() {
+      return {
+        id: editingId || crypto.randomUUID(),
+        name: document.getElementById("name").value.trim(),
+        category: document.getElementById("category").value,
+        store: document.getElementById("store").value,
+        size: document.getElementById("size").value.trim(),
+        stock: Number(document.getElementById("stock").value || 0),
+        minStock: Number(document.getElementById("minStock").value || 0),
+        unit: document.getElementById("unit").value.trim() || "個",
+        barcode: document.getElementById("barcode").value.trim(),
+        price: Number(document.getElementById("price").value || 0),
+        volume: Number(document.getElementById("volume").value || 0),
+        volumeUnit: document.getElementById("volumeUnit").value,
+        dosePerWash: Number(document.getElementById("dosePerWash").value || 0),
+        memo: document.getElementById("memo").value.trim()
+      };
+    }
+
+    function resetForm() {
+      editingId = null;
+      document.getElementById("name").value = "";
+      document.getElementById("category").value = "洗剤";
+      document.getElementById("store").value = "Amazon";
+      document.getElementById("size").value = "";
+      document.getElementById("stock").value = 1;
+      document.getElementById("minStock").value = 1;
+      document.getElementById("unit").value = "個";
+      document.getElementById("barcode").value = "";
+      document.getElementById("price").value = 0;
+      document.getElementById("volume").value = 0;
+      document.getElementById("volumeUnit").value = "mL";
+      document.getElementById("dosePerWash").value = 0;
+      document.getElementById("memo").value = "";
+    }
+
+    function saveItem() {
+      const item = getFormData();
+      if (!item.name) {
+        alert("商品名を入れてください");
+        return;
+      }
+
+      const idx = items.findIndex(x => x.id === item.id);
+      if (idx >= 0) {
+        items[idx] = item;
+      } else {
+        items.push(item);
+      }
+      saveItems();
+      resetForm();
+      render();
+    }
+
+    function editItem(id) {
+      const item = items.find(x => x.id === id);
+      if (!item) return;
+      editingId = item.id;
+      document.getElementById("name").value = item.name;
+      document.getElementById("category").value = item.category;
+      document.getElementById("store").value = item.store;
+      document.getElementById("size").value = item.size || "";
+      document.getElementById("stock").value = item.stock;
+      document.getElementById("minStock").value = item.minStock;
+      document.getElementById("unit").value = item.unit;
+      document.getElementById("barcode").value = item.barcode || "";
+      document.getElementById("price").value = item.price || 0;
+      document.getElementById("volume").value = item.volume || 0;
+      document.getElementById("volumeUnit").value = item.volumeUnit || "mL";
+      document.getElementById("dosePerWash").value = item.dosePerWash || 0;
+      document.getElementById("memo").value = item.memo || "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteItem(id) {
+      if (!confirm("削除しますか？")) return;
+      items = items.filter(x => x.id !== id);
+      saveItems();
+      render();
+    }
+
+    function changeStock(id, delta) {
+      items = items.map(item => {
+        if (item.id === id) {
+          return { ...item, stock: Math.max(0, item.stock + delta) };
+        }
+        return item;
+      });
+      saveItems();
+      render();
+    }
+
+    function render() {
+      const search = document.getElementById("search").value.toLowerCase().trim();
+      const filterCategory = document.getElementById("filterCategory").value;
+
+      const filtered = items.filter(item => {
+        const hitText =
+          item.name.toLowerCase().includes(search) ||
+          (item.store || "").toLowerCase().includes(search) ||
+          (item.memo || "").toLowerCase().includes(search) ||
+          (item.size || "").toLowerCase().includes(search) ||
+          (item.barcode || "").toLowerCase().includes(search);
+
+        const hitCategory = filterCategory === "すべて" || item.category === filterCategory;
+        return hitText && hitCategory;
+      });
+
+      document.getElementById("statItems").textContent = items.length;
+      document.getElementById("statStocks").textContent = items.reduce((sum, x) => sum + x.stock, 0);
+      document.getElementById("statLow").textContent = items.filter(x => x.stock <= x.minStock).length;
+
+      const itemsHtml = filtered.length ? filtered.map(item => {
+        const low = item.stock <= item.minStock;
+        const unit1000 = calcUnitPricePer1000(item);
+        const perWash = calcPricePerWash(item);
+
+        return `
+          <div class="card" style="margin-bottom:12px;">
+            <div class="row-between">
+              <div>
+                <div class="item-title">${item.name}</div>
+                <div>
+                  <span class="badge">${item.category}</span>
+                  <span class="badge">${item.store || ""}</span>
+                  ${item.size ? `<span class="badge">${item.size}</span>` : ""}
+                  ${low ? `<span class="badge low">在庫少</span>` : ""}
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div class="small">現在庫</div>
+                <div class="stat-value" style="font-size:30px;">${item.stock}</div>
+                <div class="small">最低在庫 ${item.minStock}${item.unit}</div>
+              </div>
+            </div>
+
+            <div class="info">
+              単位: ${item.unit}<br>
+              ${item.barcode ? `バーコード: ${item.barcode}<br>` : ""}
+              ${item.price ? `価格: ${yen(item.price)}円<br>` : ""}
+              ${item.volume ? `内容量: ${item.volume}${item.volumeUnit}<br>` : ""}
+              ${unit1000 ? `1000${item.volumeUnit}あたり: ${yen(unit1000)}円<br>` : ""}
+              ${perWash ? `1回あたり: ${perWash}円<br>` : ""}
+              ${item.memo ? `メモ: ${item.memo}` : ""}
+            </div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn secondary" onclick="changeStock('${item.id}', -1)">使った -1</button>
+              <button class="btn green" onclick="changeStock('${item.id}', 1)">買った +1</button>
+              <button class="btn" onclick="editItem('${item.id}')">編集</button>
+              <button class="btn red" onclick="deleteItem('${item.id}')">削除</button>
+            </div>
+          </div>
+        `;
+      }).join("") : `<div class="card">該当する商品がありません</div>`;
+
+      document.getElementById("items").innerHTML = itemsHtml;
+
+      const lowItems = items.filter(x => x.stock <= x.minStock);
+      document.getElementById("shoppingList").innerHTML = lowItems.length
+        ? lowItems.map(item => `
+          <div class="card" style="margin-bottom:12px;">
+            <div class="row-between">
+              <div>
+                <div class="item-title">${item.name}</div>
+                <div class="small">
+                  ${item.store} / 現在庫 ${item.stock}${item.unit} / 最低在庫 ${item.minStock}${item.unit}
+                </div>
+                ${item.size ? `<div class="small">サイズ・香り: ${item.size}</div>` : ""}
+              </div>
+              <div><span class="badge low">買う</span></div>
+            </div>
+          </div>
+        `).join("")
+        : `<div class="card">買い足しが必要な商品はありません</div>`;
+
+      document.getElementById("pricingList").innerHTML = items.length
+        ? items.map(item => {
+            const unit1000 = calcUnitPricePer1000(item);
+            const perWash = calcPricePerWash(item);
+            return `
+              <div class="card" style="margin-bottom:12px;">
+                <div class="row-between">
+                  <div>
+                    <div class="item-title">${item.name}</div>
+                    <div class="small">${item.category} / ${item.store}</div>
+                    <div class="info">
+                      価格: ${item.price ? `${yen(item.price)}円` : "未設定"}<br>
+                      内容量: ${item.volume ? `${item.volume}${item.volumeUnit}` : "未設定"}<br>
+                      1回使用量: ${item.dosePerWash ? `${item.dosePerWash}${item.volumeUnit}` : "未設定"}
+                    </div>
+                  </div>
+                  <div class="price-box">
+                    <div class="price-stat">
+                      <div class="small">1000${item.volumeUnit || "mL"}あたり</div>
+                      <div class="big">${unit1000 ? `${yen(unit1000)}円` : "-"}</div>
+                    </div>
+                    <div class="price-stat">
+                      <div class="small">1回あたり</div>
+                      <div class="big">${perWash ? `${perWash}円` : "-"}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("")
+        : `<div class="card">商品がありません</div>`;
+    }
+
+    async function startScanner() {
+      const resultBox = document.getElementById("scanResult");
+      const videoBox = document.getElementById("videoBox");
+      const video = document.getElementById("video");
+
+      if (!("BarcodeDetector" in window)) {
+        resultBox.style.display = "block";
+        resultBox.innerHTML = "このブラウザはバーコード読取APIに未対応です。バーコード欄に手入力してください。";
+        return;
+      }
+
+      try {
+        const formats = await BarcodeDetector.getSupportedFormats();
+        if (!formats.length) {
+          resultBox.style.display = "block";
+          resultBox.innerHTML = "この端末ではバーコード読取形式が利用できません。";
+          return;
+        }
+
+        const detector = new BarcodeDetector({
+          formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"]
+        });
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        videoBox.style.display = "block";
+        resultBox.style.display = "block";
+        resultBox.innerHTML = "バーコードをカメラにかざしてください。";
+
+        detectorTimer = setInterval(async () => {
+          try {
+            const barcodes = await detector.detect(video);
+            if (barcodes.length > 0) {
+              const code = barcodes[0].rawValue;
+              document.getElementById("barcode").value = code;
+              resultBox.innerHTML = "読み取り成功: " + code;
+              stopScanner();
+            }
+          } catch (e) {}
+        }, 700);
+
+      } catch (e) {
+        resultBox.style.display = "block";
+        resultBox.innerHTML = "カメラを開始できませんでした。ブラウザのカメラ許可を確認してください。";
+      }
+    }
+
+    function stopScanner() {
+      if (detectorTimer) {
+        clearInterval(detectorTimer);
+        detectorTimer = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      const video = document.getElementById("video");
+      if (video) video.srcObject = null;
+      document.getElementById("videoBox").style.display = "none";
+    }
+
+    render();
+  </script>
+</body>
+</html>
