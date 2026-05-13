@@ -123,6 +123,14 @@
       resize: vertical;
     }
 
+    label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+      display: block;
+      margin-bottom: 4px;
+    }
+
     button {
       border: none;
       border-radius: 12px;
@@ -158,11 +166,6 @@
     .btn-light {
       background: #e5e7eb;
       color: #111827;
-    }
-
-    .btn-small {
-      padding: 8px 10px;
-      font-size: 13px;
     }
 
     .inventory-tabs {
@@ -261,6 +264,7 @@
       font-size: 12px;
       color: var(--muted);
       margin-top: 3px;
+      line-height: 1.5;
     }
 
     .low-badge {
@@ -428,12 +432,6 @@
       gap: 10px;
     }
 
-    .form-row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
     .modal-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -473,6 +471,51 @@
       width: auto;
     }
 
+    .check-result {
+      border-radius: 18px;
+      padding: 14px;
+      margin-top: 12px;
+      border: 2px solid var(--border);
+      background: white;
+      box-shadow: var(--shadow);
+    }
+
+    .check-result h3 {
+      margin: 0 0 8px;
+      font-size: 19px;
+    }
+
+    .judge-buy {
+      border-color: #16a34a;
+      background: #f0fdf4;
+    }
+
+    .judge-good {
+      border-color: #22c55e;
+      background: #f0fdf4;
+    }
+
+    .judge-warn {
+      border-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    .judge-wait {
+      border-color: #dc2626;
+      background: #fef2f2;
+    }
+
+    .result-big {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .result-row {
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
     @media (min-width: 700px) {
       .toolbar-row {
         grid-template-columns: 1fr 160px;
@@ -508,10 +551,11 @@
 <body>
   <header>
     <h1>家庭用 在庫管理アプリ</h1>
-    <p>在庫・入庫・出庫・価格履歴・単価比較をまとめて管理</p>
+    <p>在庫・買う前チェック・価格履歴・単価比較をまとめて管理</p>
   </header>
 
   <main>
+    <!-- ホーム -->
     <section id="view-home" class="view active">
       <div class="section-title">ホーム</div>
 
@@ -537,7 +581,8 @@
       <div class="toolbar">
         <button onclick="openItemModal()">＋ 商品を追加</button>
         <p class="hint">
-          「買った」で入庫履歴と価格履歴、「使った」で出庫履歴を自動保存します。
+          在庫一覧で「買った」を押すと、在庫数と価格履歴が同時に記録されます。<br>
+          買い物中は「買う前」画面で、過去最安と比較できます。
         </p>
       </div>
 
@@ -545,6 +590,7 @@
       <div id="homeAlertList"></div>
     </section>
 
+    <!-- 在庫 -->
     <section id="view-inventory" class="view">
       <div class="section-title">在庫一覧</div>
 
@@ -571,24 +617,65 @@
       <div id="inventoryList"></div>
     </section>
 
-    <section id="view-inbound" class="view">
-      <div class="section-title">入庫履歴</div>
+    <!-- 買う前チェック -->
+    <section id="view-prebuy" class="view">
+      <div class="section-title">買う前チェック</div>
+
       <div class="toolbar">
-        <button onclick="clearHistoryConfirm('in')">入庫履歴を全削除</button>
-        <p class="hint">「買った」ボタンで記録された履歴です。</p>
+        <p class="hint">
+          店頭やネットで見た価格を入力すると、過去の購入履歴から「買い」か「待ち」かを判定します。
+        </p>
+
+        <div class="form-grid">
+          <div class="full">
+            <label>商品</label>
+            <select id="prebuyItem"></select>
+          </div>
+
+          <div>
+            <label>今回価格 円</label>
+            <input id="prebuyPrice" type="number" min="0" step="1" placeholder="例：698" />
+          </div>
+
+          <div>
+            <label>内容量</label>
+            <input id="prebuyAmount" type="number" min="0" step="0.01" placeholder="例：1000" />
+          </div>
+
+          <div>
+            <label>内容量の単位</label>
+            <select id="prebuyAmountUnit">
+              <option value="ml">ml</option>
+              <option value="g">g</option>
+              <option value="個">個</option>
+              <option value="枚">枚</option>
+              <option value="本">本</option>
+              <option value="袋">袋</option>
+              <option value="箱">箱</option>
+            </select>
+          </div>
+
+          <div>
+            <label>店舗名 任意</label>
+            <input id="prebuyStore" type="text" placeholder="例：コスモス、Amazon" />
+          </div>
+
+          <div class="full">
+            <label>メモ 任意</label>
+            <textarea id="prebuyNote" placeholder="例：クーポンあり、ポイント還元前、定期便価格など"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="clearPrebuyForm()">クリア</button>
+          <button onclick="checkBeforeBuy()">判定する</button>
+        </div>
       </div>
-      <div id="inboundList"></div>
+
+      <div id="prebuyResult"></div>
     </section>
 
-    <section id="view-outbound" class="view">
-      <div class="section-title">出庫履歴</div>
-      <div class="toolbar">
-        <button onclick="clearHistoryConfirm('out')">出庫履歴を全削除</button>
-        <p class="hint">「使った」ボタンで記録された履歴です。</p>
-      </div>
-      <div id="outboundList"></div>
-    </section>
-
+    <!-- 価格 -->
     <section id="view-price" class="view">
       <div class="section-title">価格履歴・単価比較</div>
 
@@ -605,20 +692,21 @@
         </div>
         <button class="btn-secondary" onclick="clearPriceHistoryConfirm()">価格履歴を全削除</button>
         <p class="hint">
-          価格 ÷ 内容量から、100ml・100g・1個あたりの単価を自動計算します。
+          「買った」で価格と内容量を入力した履歴です。最安値は自動表示されます。
         </p>
       </div>
 
       <div id="priceHistoryList"></div>
     </section>
 
+    <!-- 設定 -->
     <section id="view-settings" class="view">
       <div class="section-title">設定</div>
 
       <div class="toolbar">
         <h3>データ保存について</h3>
         <p class="small-text">
-          このアプリのデータは、このスマホ・このブラウザの localStorage に保存されます。<br>
+          このアプリのデータは、現在の端末・ブラウザの localStorage に保存されます。<br>
           PCとスマホで自動共有する場合は、次の段階で Firebase 連携版に変更します。
         </p>
       </div>
@@ -639,6 +727,7 @@
     </section>
   </main>
 
+  <!-- 下部メニュー -->
   <nav class="bottom-nav">
     <button class="nav-btn active" data-view="home" onclick="showView('home')">
       <span class="icon">🏠</span>
@@ -648,20 +737,21 @@
       <span class="icon">📦</span>
       在庫
     </button>
-    <button class="nav-btn" data-view="inbound" onclick="showView('inbound')">
+    <button class="nav-btn" data-view="prebuy" onclick="showView('prebuy')">
       <span class="icon">🛒</span>
-      入庫
-    </button>
-    <button class="nav-btn" data-view="outbound" onclick="showView('outbound')">
-      <span class="icon">📤</span>
-      出庫
+      買う前
     </button>
     <button class="nav-btn" data-view="price" onclick="showView('price')">
       <span class="icon">💴</span>
       価格
     </button>
+    <button class="nav-btn" data-view="settings" onclick="showView('settings')">
+      <span class="icon">⚙️</span>
+      設定
+    </button>
   </nav>
 
+  <!-- 商品追加・編集 -->
   <div id="itemModalBg" class="modal-bg">
     <div class="modal">
       <h2 id="itemModalTitle">商品を追加</h2>
@@ -717,9 +807,10 @@
     </div>
   </div>
 
+  <!-- 買った -->
   <div id="buyModalBg" class="modal-bg">
     <div class="modal">
-      <h2>買った・入庫登録</h2>
+      <h2>買った・在庫追加</h2>
       <p class="small-text" id="buyTargetName"></p>
 
       <div class="form-grid">
@@ -779,9 +870,10 @@
     </div>
   </div>
 
+  <!-- 使った -->
   <div id="useModalBg" class="modal-bg">
     <div class="modal">
-      <h2>使った・出庫登録</h2>
+      <h2>使った・在庫を減らす</h2>
       <p class="small-text" id="useTargetName"></p>
 
       <div class="form-grid">
@@ -809,14 +901,17 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "home_inventory_app_full_tab_v1";
+    const STORAGE_KEY = "home_inventory_app_prebuy_v1";
+    const OLD_STORAGE_KEYS = [
+      "home_inventory_app_full_tab_v1",
+      "home_inventory_app_full_v1"
+    ];
 
     let items = [];
     let histories = [];
     let editingItemId = null;
     let buyingItemId = null;
     let usingItemId = null;
-
     let currentInventoryCategory = "洗剤";
 
     const categoryIcons = {
@@ -905,7 +1000,17 @@
     }
 
     function loadData() {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      let saved = localStorage.getItem(STORAGE_KEY);
+
+      if (!saved) {
+        for (const key of OLD_STORAGE_KEYS) {
+          const old = localStorage.getItem(key);
+          if (old) {
+            saved = old;
+            break;
+          }
+        }
+      }
 
       if (!saved) {
         items = sampleData.items;
@@ -925,6 +1030,13 @@
           stock: Number(item.stock || 0),
           minStock: Number(item.minStock || 0)
         }));
+
+        histories = histories.map(h => ({
+          ...h,
+          category: normalizeCategory(h.category)
+        }));
+
+        saveData();
       } catch (e) {
         items = sampleData.items;
         histories = sampleData.histories;
@@ -957,8 +1069,7 @@
     function renderAll() {
       renderHome();
       renderInventory();
-      renderInbound();
-      renderOutbound();
+      renderPrebuyItems();
       renderPriceHistory();
     }
 
@@ -1065,6 +1176,151 @@
       `;
     }
 
+    function renderPrebuyItems() {
+      const select = document.getElementById("prebuyItem");
+      if (!select) return;
+
+      const current = select.value;
+      const sorted = [...items].sort((a, b) => a.category.localeCompare(b.category, "ja") || a.name.localeCompare(b.name, "ja"));
+
+      if (sorted.length === 0) {
+        select.innerHTML = `<option value="">商品がありません</option>`;
+        return;
+      }
+
+      select.innerHTML = sorted.map(item => {
+        const label = `${categoryIcons[item.category] || "📦"} ${item.name}（在庫 ${item.stock}${item.unit || ""}）`;
+        return `<option value="${item.id}">${escapeHtml(label)}</option>`;
+      }).join("");
+
+      if (current && items.some(item => item.id === current)) {
+        select.value = current;
+      }
+    }
+
+    function checkBeforeBuy() {
+      const itemId = document.getElementById("prebuyItem").value;
+      const item = items.find(x => x.id === itemId);
+
+      const price = Number(document.getElementById("prebuyPrice").value || 0);
+      const amount = Number(document.getElementById("prebuyAmount").value || 0);
+      const amountUnit = document.getElementById("prebuyAmountUnit").value;
+      const store = document.getElementById("prebuyStore").value.trim();
+
+      const resultBox = document.getElementById("prebuyResult");
+
+      if (!item) {
+        resultBox.innerHTML = `<div class="empty">商品を選んでください。</div>`;
+        return;
+      }
+
+      if (price <= 0 || amount <= 0) {
+        resultBox.innerHTML = `<div class="empty">価格と内容量を入力してください。</div>`;
+        return;
+      }
+
+      const now = calcUnitPrice(price, amount, amountUnit);
+
+      const past = histories.filter(h =>
+        h.type === "in" &&
+        h.itemName === item.name &&
+        h.amountUnit === amountUnit &&
+        h.unitPrice &&
+        Number(h.unitPrice) > 0
+      );
+
+      if (past.length === 0) {
+        resultBox.innerHTML = `
+          <div class="check-result judge-good">
+            <h3>📝 まだ比較データがありません</h3>
+            <div class="result-big">今回の単価：${escapeHtml(now.label)}</div>
+            <div class="result-row">
+              この商品は、同じ単位の過去価格がまだありません。<br>
+              今回買ったあとに記録しておくと、次回から最安比較できます。<br>
+              ${store ? `店舗：${escapeHtml(store)}<br>` : ""}
+            </div>
+            <div class="modal-actions">
+              <button class="btn-light" onclick="clearPrebuyForm()">クリア</button>
+              <button class="btn-success" onclick="openBuyFromPrebuy()">この内容で買った登録</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const best = past.reduce((min, h) => Number(h.unitPrice) < Number(min.unitPrice) ? h : min, past[0]);
+      const bestPrice = Number(best.unitPrice);
+      const currentPrice = Number(now.value);
+      const diff = currentPrice - bestPrice;
+      const diffPercent = bestPrice > 0 ? diff / bestPrice * 100 : 0;
+
+      let resultClass = "";
+      let title = "";
+      let message = "";
+
+      if (currentPrice < bestPrice) {
+        resultClass = "judge-buy";
+        title = "✅ 最安値更新！買いです";
+        message = "過去最安より安いです。よく使う商品なら買ってOKです。";
+      } else if (diffPercent <= 3) {
+        resultClass = "judge-good";
+        title = "🟢 ほぼ最安値です";
+        message = "過去最安とほぼ同じ価格です。必要なら買ってOKです。";
+      } else if (diffPercent <= 10) {
+        resultClass = "judge-warn";
+        title = "🟡 少し高めです";
+        message = "過去最安より少し高いです。在庫が少ないなら買ってもOKです。";
+      } else {
+        resultClass = "judge-wait";
+        title = "🔴 今は高めです";
+        message = "過去最安よりかなり高めです。急がなければ待ちがおすすめです。";
+      }
+
+      resultBox.innerHTML = `
+        <div class="check-result ${resultClass}">
+          <h3>${title}</h3>
+          <div class="result-big">${escapeHtml(item.name)}</div>
+          <div class="result-row">
+            今回価格：${formatYen(price)} / ${amount}${escapeHtml(amountUnit)}<br>
+            今回単価：<strong>${escapeHtml(now.label)}</strong><br>
+            過去最安：<strong>${escapeHtml(best.unitPriceLabel || formatNumber(bestPrice))}</strong><br>
+            最安記録日：${escapeHtml(best.date || "未記録")}<br>
+            最安店舗：${escapeHtml(best.store || "未入力")}<br>
+            差：${diff >= 0 ? "+" : ""}${formatNumber(diff)} 円　
+            ${diffPercent >= 0 ? "+" : ""}${formatNumber(diffPercent)}%<br>
+            判定：${message}
+          </div>
+          <div class="modal-actions">
+            <button class="btn-light" onclick="clearPrebuyForm()">クリア</button>
+            <button class="btn-success" onclick="openBuyFromPrebuy()">この内容で買った登録</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function clearPrebuyForm() {
+      document.getElementById("prebuyPrice").value = "";
+      document.getElementById("prebuyAmount").value = "";
+      document.getElementById("prebuyAmountUnit").value = "ml";
+      document.getElementById("prebuyStore").value = "";
+      document.getElementById("prebuyNote").value = "";
+      document.getElementById("prebuyResult").innerHTML = "";
+    }
+
+    function openBuyFromPrebuy() {
+      const itemId = document.getElementById("prebuyItem").value;
+      const item = items.find(x => x.id === itemId);
+      if (!item) return;
+
+      openBuyModal(itemId);
+
+      document.getElementById("buyPrice").value = document.getElementById("prebuyPrice").value;
+      document.getElementById("buyAmount").value = document.getElementById("prebuyAmount").value;
+      document.getElementById("buyAmountUnit").value = document.getElementById("prebuyAmountUnit").value;
+      document.getElementById("buyStore").value = document.getElementById("prebuyStore").value;
+      document.getElementById("buyNote").value = document.getElementById("prebuyNote").value;
+    }
+
     function openItemModal(id = null) {
       editingItemId = id;
 
@@ -1152,7 +1408,7 @@
       const item = items.find(x => x.id === id);
       if (!item) return;
 
-      const ok = confirm(`「${item.name}」を削除しますか？\n関連する履歴は残ります。`);
+      const ok = confirm(`「${item.name}」を削除しますか？\n価格履歴は残ります。`);
       if (!ok) return;
 
       items = items.filter(x => x.id !== id);
@@ -1228,6 +1484,7 @@
       saveData();
       closeBuyModal();
       renderAll();
+      showView("inventory");
     }
 
     function openUseModal(id) {
@@ -1306,59 +1563,6 @@
       return { value, label };
     }
 
-    function renderInbound() {
-      const list = document.getElementById("inboundList");
-      const data = histories
-        .filter(h => h.type === "in")
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      if (data.length === 0) {
-        list.innerHTML = `<div class="empty">入庫履歴はまだありません。</div>`;
-        return;
-      }
-
-      list.innerHTML = data.map(h => `
-        <div class="history-card">
-          <div class="history-title">🛒 ${escapeHtml(h.itemName)}</div>
-          <div class="history-meta">
-            日付：${escapeHtml(h.date)}<br>
-            数量：${h.qty} ${escapeHtml(h.unit || "")}<br>
-            カテゴリ：${escapeHtml(h.category || "")}<br>
-            ${h.store ? `店舗：${escapeHtml(h.store)}<br>` : ""}
-            ${h.price ? `価格：${formatYen(h.price)}<br>` : ""}
-            ${h.amount ? `内容量：${h.amount} ${escapeHtml(h.amountUnit || "")}<br>` : ""}
-            ${h.unitPriceLabel ? `単価：${escapeHtml(h.unitPriceLabel)}<br>` : ""}
-            ${h.sale ? `<span class="sale-badge">SALE</span><br>` : ""}
-            ${h.note ? `備考：${escapeHtml(h.note)}` : ""}
-          </div>
-        </div>
-      `).join("");
-    }
-
-    function renderOutbound() {
-      const list = document.getElementById("outboundList");
-      const data = histories
-        .filter(h => h.type === "out")
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      if (data.length === 0) {
-        list.innerHTML = `<div class="empty">出庫履歴はまだありません。</div>`;
-        return;
-      }
-
-      list.innerHTML = data.map(h => `
-        <div class="history-card">
-          <div class="history-title">📤 ${escapeHtml(h.itemName)}</div>
-          <div class="history-meta">
-            日付：${escapeHtml(h.date)}<br>
-            数量：${h.qty} ${escapeHtml(h.unit || "")}<br>
-            カテゴリ：${escapeHtml(h.category || "")}<br>
-            ${h.note ? `備考：${escapeHtml(h.note)}` : ""}
-          </div>
-        </div>
-      `).join("");
-    }
-
     function renderPriceHistory() {
       const search = document.getElementById("priceSearchInput").value.trim().toLowerCase();
       const category = document.getElementById("priceCategoryFilter").value;
@@ -1420,18 +1624,8 @@
       return Number(target.unitPrice) === min;
     }
 
-    function clearHistoryConfirm(type) {
-      const label = type === "in" ? "入庫履歴" : "出庫履歴";
-      const ok = confirm(`${label}を全て削除しますか？\n商品在庫数は変更されません。`);
-      if (!ok) return;
-
-      histories = histories.filter(h => h.type !== type);
-      saveData();
-      renderAll();
-    }
-
     function clearPriceHistoryConfirm() {
-      const ok = confirm("価格履歴を削除しますか？\n入庫履歴の価格情報も削除されます。");
+      const ok = confirm("価格履歴を削除しますか？\n買った履歴の価格情報も削除されます。");
       if (!ok) return;
 
       histories = histories.map(h => {
@@ -1488,7 +1682,10 @@
           category: normalizeCategory(item.category)
         }));
 
-        histories = data.histories;
+        histories = data.histories.map(h => ({
+          ...h,
+          category: normalizeCategory(h.category)
+        }));
 
         saveData();
         renderAll();
